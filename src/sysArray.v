@@ -1,4 +1,6 @@
 `include "defines.v"
+
+`default_nettype none
 module tt_um_haoyang_systolicarray(
 
     input  wire [7:0] ui_in,	// Dedicated inputs
