@@ -3,7 +3,7 @@
 
 # defaults
 SIM ?= icarus
-TOPLEVEL_LANG ?= verilog
+TOPLEVEL = tt_um_haoyang_systolicarray
 SRC_DIR = $(PWD)/../src
 PROJECT_SOURCES = sysArray.v inputbuf.v MatrixMultiplier.v PE.v defines.v 
 
