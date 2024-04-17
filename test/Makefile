@@ -5,7 +5,8 @@
 SIM ?= icarus
 TOPLEVEL_LANG ?= verilog
 SRC_DIR = $(PWD)/../src
-PROJECT_SOURCES = sysArray.v
+PROJECT_SOURCES = sysArray.v inputbuf.v MatrixMultiplier.v
+
 
 ifneq ($(GATES),yes)
 
