@@ -32,19 +32,15 @@ async def matrix_multiply_test(dut):
     for row in weight_matrix:
         for value in row:
             # Set ui_in where the LSB is conf and the rest is the value
-            dut.ui_in.value = (value & 0xFE) | 0x01  # Set conf to 1
-            dut.key_valid.value = 1
+            dut.ui_in.value = (value & 0xFC) | 0x02  # Set key_valid to 1
             await RisingEdge(dut.clk)
-            dut.key_valid.value = 0
 
     # Provide input to the multiplier
     for row in input_matrix:
         for value in row:
             # Clear the LSB of ui_in to set conf to 0
-            dut.ui_in.value = value & 0xFE  # Ensure conf is 0
-            dut.key_valid.value = 1
+            dut.ui_in.value = value & 0xFC  # Ensure key_valid is 0
             await RisingEdge(dut.clk)
-            dut.key_valid.value = 0
 
     # Wait for the results to be processed
     await RisingEdge(dut.clk)
