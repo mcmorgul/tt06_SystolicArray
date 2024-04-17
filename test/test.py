@@ -1,9 +1,9 @@
 import cocotb
 from cocotb.triggers import RisingEdge, ClockCycles
 from cocotb.regression import TestFactory
-from cocotb import Clock, fork
+from cocotb.clock import Clock
+from cocotb.triggers import fork
 import numpy as np
-
 # Define the input matrix and the weight matrix
 input_matrix = np.array([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12], [13, 14, 15, 16]])
 weight_matrix = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])  # Identity matrix for simplicity
