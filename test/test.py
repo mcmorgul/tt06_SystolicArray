@@ -1,47 +1,54 @@
 import cocotb
-from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge, ClockCycles
+from cocotb.regression import TestFactory
+from cocotb import Clock, fork
+import numpy as np
 
-# 矩阵乘法测试
+# Define the input matrix and the weight matrix
+input_matrix = np.array([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12], [13, 14, 15, 16]])
+weight_matrix = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])  # Identity matrix for simplicity
+
+# Expected result is the product of input_matrix and weight_matrix
+expected_result = np.dot(input_matrix, weight_matrix)
+
 @cocotb.test()
-async def matrix_multiplication_test(dut):
-    # 创建时钟
-    clock = Clock(dut.clk, 10, units="us")  # 设置时钟周期为10微秒
-    cocotb.start_soon(clock.start())        # 启动时钟
-
-    # 初始复位
+async def matrix_multiply_test(dut):
+    # Setup clock
+    clock = Clock(dut.clk, 10, units="ns")  # 100MHz clock
+    fork(clock.start())  # Start the clock
+    
+    # Reset
     dut.rst_n.value = 0
     await ClockCycles(dut.clk, 5)
     dut.rst_n.value = 1
     await ClockCycles(dut.clk, 5)
 
-    # 输入矩阵A的数据
-    matrix_A = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
-    # 输入矩阵B的数据，这里假设B矩阵每个元素都是1，简化计算
-    matrix_B = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-
-    # 配置矩阵A
+    # Configure weights in the PEs
     for i in range(16):
-        dut.ui_in.value = matrix_A[i]
-        dut.conf.value = 1  # 配置模式
+        dut.ui_in.value = weight_matrix.flatten()[i]
+        dut.conf.value = 1
+        dut.key_valid.value = 1
         await RisingEdge(dut.clk)
 
-    # 配置矩阵B并计算矩阵乘法
+    # Feed input matrix
     for i in range(16):
-        dut.ui_in.value = matrix_B[i]
-        dut.conf.value = 0  # 执行模式
+        dut.ui_in.value = input_matrix.flatten()[i]
+        dut.conf.value = 0
+        dut.key_valid.value = 1
         await RisingEdge(dut.clk)
 
-    # 计算预期的输出矩阵C
-    expected_results = [
-        10, 20, 30, 40,
-        26, 52, 78, 104,
-        42, 84, 126, 168,
-        58, 116, 174, 232
-    ]
+    # Wait for the results to be computed
+    await ClockCycles(dut.clk, 20)
 
-    # 验证输出是否正确
-    for i, expected in enumerate(expected_results):
-        actual = int(dut.uo_out.value)
-        assert actual == expected, f"Output {i}: Expected {expected}, got {actual}"
+    # Read the output results
+    output_results = []
+    for _ in range(4):
+        output_results.append(int(dut.uo_out.value))
+        await RisingEdge(dut.clk)
 
+    # Check the results
+    assert np.array_equal(output_results, expected_result.flatten()), f"Test failed: {output_results} != {expected_result.flatten()}"
+
+# Create the test
+tf = TestFactory(matrix_multiply_test)
+tf.generate_tests()
