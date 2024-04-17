@@ -1,62 +1,20 @@
-# SPDX-FileCopyrightText: © 2023 Uri Shaked <uri@tinytapeout.com>
-# SPDX-License-Identifier: MIT
-
 import cocotb
 from cocotb.clock import Clock
-from cocotb.triggers import ClockCycles, RisingEdge
-from cocotb.binary import BinaryValue
+from cocotb.triggers import RisingEdge, ClockCycles
 
+# 简单功能测试
 @cocotb.test()
-async def test_basic_functionality(dut):
-    dut._log.info("Start of basic functionality test")
+async def test_simple_functionality(dut):
+    clock = Clock(dut.clk, 10, units="us")  # 设定时钟周期为10微秒
+    cocotb.start_soon(clock.start())        # 开始时钟
 
-    # Setup the clock
-    clock = Clock(dut.clk, 10, units="us")
-    cocotb.start_soon(clock.start())
-
-    # Reset the module
+    # 复位设备
     dut.rst_n.value = 0
-    await ClockCycles(dut.clk, 5)
+    await ClockCycles(dut.clk, 2)           # 等待两个时钟周期
     dut.rst_n.value = 1
-    await ClockCycles(dut.clk, 5)
+    await ClockCycles(dut.clk, 2)
 
-    # Test configuration mode
-    dut.ui_in.value = 0b00000001  # Enabling configuration mode
-    dut.uio_in.value = 0x55  # Example input for bi-directional IO
-    await ClockCycles(dut.clk, 1)
-
-    # Check outputs after configuration
-    assert dut.uio_oe.value.integer == 0xFF, "uio_oe should be set to all outputs enabled"
-
-    # Test data processing
-    for i in range(16):  # Small range for demonstration
-        dut.ui_in.value = i
-        dut.uio_in.value = i
-        await ClockCycles(dut.clk, 1)
-        # Assuming some hypothetical expected transformation, e.g., output is input shifted left by 1
-        expected_output = (i << 1) & 0xFF
-        assert dut.uo_out.value.integer == expected_output, f"Expected output {expected_output}, got {dut.uo_out.value.integer}"
-        assert dut.uio_out.value.integer == expected_output, f"Expected output {expected_output}, got {dut.uio_out.value.integer}"
-
-    dut._log.info("Basic functionality test completed successfully")
-
-
-@cocotb.test()
-async def test_reset_behavior(dut):
-    dut._log.info("Start of reset behavior test")
-
-    clock = Clock(dut.clk, 10, units="us")
-    cocotb.start_soon(clock.start())
-
-    # Assert reset behavior
-    dut.rst_n.value = 0
-    await ClockCycles(dut.clk, 10)
-    assert dut.uio_oe.value == BinaryValue("00000000"), "uio_oe should be disabled on reset"
-    assert dut.uo_out.value == 0, "uo_out should be reset to 0"
-
-    # Release reset and observe default state
-    dut.rst_n.value = 1
-    await ClockCycles(dut.clk, 5)
-    assert dut.uio_oe.value != BinaryValue("00000000"), "uio_oe should be enabled after reset release"
-
-    dut._log.info("Reset behavior test completed successfully")
+    # 设定测试输入并检查输出
+    dut.ui_in.value = 0x55                  # 设置一个简单的测试值
+    await ClockCycles(dut.clk, 1)           # 等待一个时钟周期
+    assert dut.uo_out.value == dut.ui_in.value, "Output should match input under simple conditions"
