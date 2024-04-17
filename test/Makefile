@@ -5,7 +5,7 @@
 SIM ?= icarus
 TOPLEVEL_LANG ?= verilog
 SRC_DIR = $(PWD)/../src
-PROJECT_SOURCES = tt_um_haoyang_alarm.v
+PROJECT_SOURCES = sysArray.v
 
 ifneq ($(GATES),yes)
 
